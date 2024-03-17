@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, jsonify, request
 import jwt 
 import datetime
 from functools import wraps
@@ -6,6 +6,12 @@ from functools import wraps
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'oQpvCDuuITsDKyVpqKgREdQrRjFYzDGG'
+
+# Kullanıcı bilgileri (gerçek uygulamada veritabanından alınır)
+users = {
+    'user1': 'password1',
+    'user2': 'password2'
+}
 
 def token_required(f):
     @wraps(f)
@@ -28,21 +34,27 @@ def token_required(f):
 
     return decorated
 
+@app.route('/login', methods=['POST'])
+def login():
+    auth = request.json
+
+    if not auth or not auth.get('username') or not auth.get('password'):
+        return jsonify({'message': 'Kullanıcı adı ve parola gereklidir'}), 401
+
+    username = auth['username']
+    password = auth['password']
+
+    if username not in users or users[username] != password:
+        return jsonify({'message': 'Geçersiz kullanıcı adı veya parola'}), 401
+    
+    # Başarılı giriş işlemi sonrasında JWT token oluşturulur
+    token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=15)}, app.config['SECRET_KEY'])
+    return jsonify({'token': token})
+
 @app.route('/protected')
 @token_required
 def protected():
     return jsonify({'message' : 'This is only available for people with valid tokens.'})
-
-@app.route('/login')
-def login():
-    auth = request.authorization
-
-    if auth and auth.username == '' and auth.password == '':
-        token = jwt.encode({'logged_in' : True, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=15)}, app.config['SECRET_KEY'], algorithm="HS256")
-
-        return jsonify({'token' : token})
-
-    return make_response('Could not verify!', 401, {'WWW-Authenticate' : 'Basic realm="Login Required"'})
 
 if __name__ == "__main__":
     app.run(debug=True)
