@@ -34,7 +34,7 @@ def token_required(f):
 
     return decorated
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/v1/login', methods=['POST'])
 def login():
     auth = request.json
 
@@ -51,7 +51,7 @@ def login():
     token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=15)}, app.config['SECRET_KEY'])
     return jsonify({'token': token})
 
-@app.route('/protected')
+@app.route('/api/v1/protected')
 @token_required
 def protected():
     return jsonify({'message' : 'This is only available for people with valid tokens.'})
