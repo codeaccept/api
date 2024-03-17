@@ -57,7 +57,7 @@ def protected():
     return jsonify({'message' : 'This is only available for people with valid tokens.'})
 
 @app.route('/api/v1/unprotected')
-def protected():
+def unprotected():
     return jsonify({'message' : 'Successful!'})
 
 if __name__ == "__main__":
